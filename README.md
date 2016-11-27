@@ -1,12 +1,17 @@
 # Hikaye
 
-Hikaye, metin tabanlı etkileşimli hikayeler yazmak amacıyla oluşturulmuş bir betik dilidir. Bu belge de Hikaye dilinin belirtecidir ve henüz taslak aşamasındadır.
+Hikaye, metin tabanlı etkileşimli hikayeler yazmak amacıyla oluşturulmuş bir
+betik dilidir. Bu belge de Hikaye dilinin belirtecidir ve henüz taslak 
+aşamasındadır.
 
 Son Güncellenme: 27-11-2016 
 
 ## Ana Bloklar:
 
-Bir oyunu oluşturabilmek için oyunla ilgili çeşitli nesneleri ve etkileşimleri tanımlamamız gerekmektedir. Ana bloklar yaptığımız tanımlamarı tiplerine göre gruplamamızı sağlar. Bir hikaye dosyasında Ana Bloklar ortalama aşağıdaki gibi gözükecektir.
+Bir oyunu oluşturabilmek için oyunla ilgili çeşitli nesneleri ve etkileşimleri 
+tanımlamamız gerekmektedir. Ana bloklar yaptığımız tanımlamarı tiplerine göre 
+gruplamamızı sağlar. Bir hikaye dosyasında Ana Bloklar ortalama aşağıdaki gibi 
+gözükecektir.
 
     --- Hikaye ---
 
@@ -35,7 +40,10 @@ Bir oyunu oluşturabilmek için oyunla ilgili çeşitli nesneleri ve etkileşiml
     ...
  
 
-Örneğin eğer elimizde "Yaşlı Adam" adında bir karakter varsa bunu "Karakterler" ana bloğu altında, "Telefon" adında bir nesne varsa da "Nesneler" bloğu altında tanımlayabiliriz. Bu sayede çalıştırıcımız ona gösterdiğimiz nesnelerin tipini algılar.
+Örneğin eğer elimizde "Yaşlı Adam" adında bir karakter varsa bunu 
+"Karakterler" ana bloğu altında, "Telefon" adında bir nesne varsa da 
+"Nesneler" bloğu altında tanımlayabiliriz. Bu sayede çalıştırıcımız ona 
+gösterdiğimiz nesnelerin tipini algılar.
 
 Ana bloklar tanımlanırken üstünde ve altında iki adet boşluk bırakılır.
 

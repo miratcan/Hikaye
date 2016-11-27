@@ -16,8 +16,8 @@ Bilgiler:
 
 Falcı Kadın:
 
-  İncelendiğinde: Bol renkli kıyafetleri esmer teni ve kocaman gözleriyle
-  sana bakıyor.
+  İncelendiğinde: Bol renkli kıyafetleri esmer teni ve kocaman gözleriyle sana
+  bakıyor.
 
 Yaşlı Dede:
 
@@ -37,27 +37,26 @@ Köy Meydanı:
 
     Karakterler: Falcı Kadın, Yaşlı Dede
 
-    İncelendiğinde: Köy meydanında bir dört yol ağzı. Daha önce gezip
-    gördüğün köylerden hiç de farklı değil burası. Ana cadde
-    doğu-batı doğrultusunda uzanıyor. kuzey-güney doğrultusunda ise
-    daha dar bir sokak kesiyor.
+    İncelendiğinde: Köy meydanında bir dört yol ağzı. Daha önce gezip gördüğün
+    köylerden hiç de farklı değil burası. Ana cadde doğu batı doğrultusunda
+    uzanıyor. kuzey-güney doğrultusunda ise daha dar bir sokak kesiyor.
 
-    Koklandığında: Burası kuru toprak ve toz kokuyor. Yakınlardaki
-    büyük baş hayvanların kokusunu da alabiliyorsun.
+    Koklandığında: Burası kuru toprak ve toz kokuyor. Yakınlardaki büyük baş
+    hayvanların kokusunu da alabiliyorsun.
 
 Köyün Kuzey Bitimi:
 
-    İncelendiğinde: Köyün kuzey tarafındaki orman ile köy arasında
-    kalan yoldasın. Kuzeydoğu tarafında dar bir yol ve ucunda bir
-    ufak kulübe gözükmekte.
+    İncelendiğinde: Köyün kuzey tarafındaki orman ile köy arasında kalan
+    yoldasın. Kuzeydoğu tarafında dar bir yol ve ucunda bir ufak kulübe
+    gözükmekte.
 
 
 Küçük Kulübe:
 
     İçeriyor: Posta Kutusu, Altın Anahtar
 
-    İncelendiğinde: Beyaz bir kulübe, her ne kadar terk edilmiş gözükse
-    çok zaman geçmemiş olmalı. Kapının önünde bir posta kutusu var.
+    İncelendiğinde: Beyaz bir kulübe, her ne kadar terk edilmiş gözükse de çok
+    zaman geçmemiş olmalı. Kapının önünde bir posta kutusu var.
 
     Açıldığında: (Gerekli: Kırmızı Anahtar) Anahtarı 
 
@@ -71,14 +70,13 @@ Posta Kutusu:
     İçeriyor: fatura
     Özellikler: kilitli
 
-    Açıldığında: Posta kutusu seni pekde uğraştırmadan açılıyor.
-    İçeride bir mektup var.
+    Açıldığında: Posta kutusu seni pekde uğraştırmadan açılıyor. İçeride bir
+    mektup var.
 
 Fatura:
    
     Özellikler: okunabilir
 
-    Okunduğunda: Mirat Can Bayrak adına gelen bir fatura olduğunu
-    görüyorsun. Fatura 3 ay öncesine ait. Eve bu sürede hiç kimse
-    gelmemiş olmalı.
+    Okunduğunda: Mirat Can Bayrak adına gelen bir fatura olduğunu görüyorsun.
+    Fatura 3 ay öncesine ait. Eve bu sürede hiç kimse gelmemiş olmalı.
 
