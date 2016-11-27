@@ -16,6 +16,7 @@ $ pep8 hikaye.py
 $ pep257 hikaye.py
 """
 
+
 def reverse_direction(direction):
     """Reverse given direction.
 
@@ -38,13 +39,15 @@ class GameObject(object):
 
     def __init__(self, *args, **kwargs):
         """
-        All game objects must have a name, given as first argument at initalization.
+        All game objects must have a name, given as first argument at
+        initalization.
 
         >>> _object = GameObject('Foo')
         >>> _object = GameObject()
         Traceback (most recent call last):
          ...
-        AssertionError: All game objects must have at least one argument that explains name of the object.
+        AssertionError: All game objects must have at least one argument \
+that explains name of the object.
         """
         assert len(args) > 0, 'All game objects must have at least one ' \
                               'argument that explains name of the object.'
@@ -58,8 +61,8 @@ class GameObject(object):
 class Container(list):
 
     """
-    Containers are list like objects that can only hold one object with same name.
-    Also you can get an object from list with calling it's name.
+    Containers are list like objects that can only hold one object with
+    same name. Also you can get an object from list with calling it's name.
 
     >>> class Foo(GameObject): pass
     >>> class FooContainer(Container): obj_type=Foo
@@ -74,7 +77,8 @@ class Container(list):
     >>> container.append(None)
     Traceback (most recent call last):
     ...
-    AssertionError: This container only hold objects that inherited from <class '__main__.Foo'>.
+    AssertionError: This container only hold objects that inherited
+    from <class '__main__.Foo'>.
 
     Also containers are list but they can call objects with their names.
 
@@ -126,7 +130,8 @@ class Place(GameObject):
         """
         A place can be initialized with a description:
 
-        >>> place = Place('House of King', description='Very nice decorated place')
+        >>> place = Place('House of King',
+       >>>      description='Very nice decorated place')
         >>> place
         <Place: House of King>
         >>> place.description
@@ -219,7 +224,10 @@ class Human(Creature):
 
 
 class Player(Human):
-    pass
+    def look_around(self):
+        print self.place.title
+        print
+        print self.place.description
 
 
 class Game(object):
@@ -228,13 +236,17 @@ class Game(object):
         """
         Container for game state.
 
-        >>> place_1 = Place('My Room', description="It is so dark here, I can not see anything")
-        >>> place_2 = Place('Corridor', description='A radio playing')
+        >>> place_1 = Place('My Room',
+        >>>     description="It is so dark here, I can not see anything")
+        >>> place_2 = Place('Corridor',
+        >>>     description='A radio playing')
         >>> place_3 = Place('Bathroom', description='I see my face!')
-        >>> game = Game('Nameless Guest', author='Mirat', places=[place_1, place_2, place_3])
+        >>> game = Game('Nameless Guest', author='Mirat',
+        >>>     places=[place_1, place_2, place_3])
+        >>>
         >>> print game
         Nameless Guest game by Mirat
-        
+
         Let's connect the rooms:
 
         >>> game.places.connect('My Room', NORTH, 'Corridor')
@@ -249,10 +261,10 @@ class Game(object):
         self.version = version
         self.status = PLAYING
         self.places = PlaceContainer(places)
+        self.player = Player('Player')
 
     def start(self, player):
-        print player.place.title
-        print player.place.description
+        self.player.look_around()
 
     def __repr__(self):
         """Representation for game object."""
