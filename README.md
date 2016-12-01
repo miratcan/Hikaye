@@ -51,7 +51,8 @@ Ana bloklar tanımlanırken üstünde ve altında iki adet boşluk bırakılır.
 ## Nesneler:
 
 
-Nesneler ilgili Ana Bloğun altında tanımlanır. Örneğin elimizde "Yaşlı Adam" adında bir karakter var. Bunu aşağıdaki gibi tanımlarız.
+Nesneler ilgili Ana Bloğun altında tanımlanır. Örneğin elimizde "Yaşlı Adam"
+adında bir karakter var. Bunu aşağıdaki gibi tanımlarız.
 
     --- Hikaye ---
 
@@ -64,8 +65,8 @@ Nesneler ilgili Ana Bloğun altında tanımlanır. Örneğin elimizde "Yaşlı A
 
     Yaşlı Adam:
 
-        İncelendiğinde: Buruşmuş yüzü ve eksik dişleriyle bana bakıyor, karanlık gözleri
-        sanki bir şey anlatmaya çalışıyordu
+        İncelendiğinde: Buruşmuş yüzü ve eksik dişleriyle bana bakıyor,
+        karanlık gözleri sanki bir şey anlatmaya çalışıyordu.
 
 
     --- Mekanlar ---
@@ -74,15 +75,23 @@ Nesneler ilgili Ana Bloğun altında tanımlanır. Örneğin elimizde "Yaşlı A
     ...
     ...
 
-Nesneler "Nesne İsmi:" şeklinde isimlendirilerek tanımlanır. Nesnenin tipi içinde bulunduğu Ana Blok tarafından belirlenir. Nesnelere ait özellikler de Özellik: şeklinde ve 4 karakter girintilenerek yazılır. Bu örnekte bir "Yaşlı Adam" karakteri, ve bu karakter incelendiğinde ortaya çıkacak yazı belirlenmiştir.
+Nesneler "Nesne İsmi:" şeklinde isimlendirilerek tanımlanır. Nesnenin tipi
+içinde bulunduğu Ana Blok tarafından belirlenir. Nesnelere ait özellikler de
+Özellik: şeklinde ve 4 karakter girintilenerek yazılır. Bu örnekte bir
+"Yaşlı Adam" karakteri, ve bu karakter incelendiğinde ortaya çıkacak yazı
+belirlenmiştir.
 
 ## Özellikler
 
-Nesnelere ait özellikler nesne tanımlamarının altına 4 karakter girintilenerek yapılır. Özelliklere verilen değerlerin cinsi çalıştırıcı tarafından otomatik olarak algılanır. Eğer girilen değer 79 karakterden uzunsa bir alt satırdan aynı girintileme ile devam edilir.
+Nesnelere ait özellikler nesne tanımlamarının altına 4 karakter girintilenerek
+yapılır. Özelliklere verilen değerlerin cinsi çalıştırıcı tarafından otomatik
+olarak algılanır. Eğer girilen değer 79 karakterden uzunsa bir alt satırdan
+aynı girintileme ile devam edilir.
 
 ## Veri Tipleri
 
-Özelliklere verilen değerlerin tipleri otomatik olarak algılanır. Hikaye dilinde var olan veri tipleri şunlardır:
+Özelliklere verilen değerlerin tipleri otomatik olarak algılanır. Hikaye
+dilinde var olan veri tipleri şunlardır:
 
   * Metin
   * Sayı
@@ -101,16 +110,16 @@ Aşağıdaki örnekte var olan bütün veri tiplerini görebilirsiniz:
     ...
 
     --- Nesneler ---
-    
-    Saat:
-    
-        İncelendiğinde:  
+
+    ...
+    ...
+
     --- Karakterler ---
 
     Yaşlı Adam:
 
-        İncelendiğinde: Buruşmuş yüzü ve eksik dişleriyle bana bakıyor, karanlık gözleri
-        sanki bir şey anlatmaya çalışıyordu.
+        İncelendiğinde: Buruşmuş yüzü ve eksik dişleriyle bana bakıyor,
+        karanlık gözleri sanki bir şey anlatmaya çalışıyordu.
 
         Birden bire ortaya çıkmıştı nereden geldiğini görememiştim.
 
