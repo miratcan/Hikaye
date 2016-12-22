@@ -1,3 +1,7 @@
+from random import randint
+import sys
+from time import sleep
+
 NORTH = 'N'
 SOUTH = 'S'
 WEST = 'W'
@@ -9,11 +13,14 @@ GAME_OVER = 'GO'
 DIRECTIONS = [NORTH, SOUTH, WEST, EAST]
 GAME_STATUSES = [PLAYING, GAME_OVER]
 
+TYPING_SPEED = 0.05
+TYPING_SPEED_TOLERANCE = 0.05
+
 """
 Before commiting any changes check this file with:
-$ python hikaye.py
-$ pep8 hikaye.py
-$ pep257 hikaye.py
+python hikaye.py
+pep8 hikaye.py
+pep257 hikaye.py
 """
 
 
@@ -31,6 +38,15 @@ def reverse_direction(direction):
     """
     return {NORTH: SOUTH, SOUTH: NORTH,
             WEST: EAST, EAST: WEST}[direction]
+
+
+def _print(line, constant_speed=False):
+    for char in line:
+	sys.stdout.write(char)
+	sys.stdout.flush()
+	speed = TYPING_SPEED
+        sleep(speed)
+    print
 
 
 class GameObject(object):
@@ -52,6 +68,9 @@ that explains name of the object.
         assert len(args) > 0, 'All game objects must have at least one ' \
                               'argument that explains name of the object.'
         self.name = args[0]
+
+        if len(args) == 2:
+           self.description = args[1]
 
     def __repr__(self):
         """Representation for GameObject."""
@@ -131,7 +150,7 @@ class Place(GameObject):
         A place can be initialized with a description:
 
         >>> place = Place('House of King',
-       >>>      description='Very nice decorated place')
+        >>>     description='Very nice decorated place')
         >>> place
         <Place: House of King>
         >>> place.description
@@ -147,7 +166,6 @@ class Place(GameObject):
         [<GameObject: Rope>]
         """
         super(Place, self).__init__(*args)
-        self.description = kwargs.pop('description', None)
         self.exits = {}
         self.objects = ObjectContainer()
 
@@ -213,8 +231,8 @@ class Creature(GameObject):
     STRENGTH = 30
 
     def __init__(self, *args, **kwargs):
-        super(Human, self).__init__(*args, **kwargs)
-        self.hitpoints = kwargs.pop('hitpoints')
+        super(Creature, self).__init__(*args, **kwargs)
+        self.hitpoints = kwargs.pop('hitpoints', self.HITPOINTS)
 
 
 class Human(Creature):
@@ -225,9 +243,10 @@ class Human(Creature):
 
 class Player(Human):
     def look_around(self):
-        print self.place.title
-        print
-        print self.place.description
+        _print(self.place.name)
+        _print('-' * len(self.place.name), constant_speed=True)
+	if self.place.description:
+            _print(self.place.description)
 
 
 class Game(object):
@@ -263,7 +282,8 @@ class Game(object):
         self.places = PlaceContainer(places)
         self.player = Player('Player')
 
-    def start(self, player):
+    def start(self):
+	_print('\n' * 20)
         self.player.look_around()
 
     def __repr__(self):
