@@ -13,7 +13,7 @@ GAME_OVER = 'GO'
 DIRECTIONS = [NORTH, SOUTH, WEST, EAST]
 GAME_STATUSES = [PLAYING, GAME_OVER]
 
-TYPING_SPEED = (0.05, 0.07, 0.1, 0.15, 0.20, 0.25)
+TYPING_SPEED = (0.05, 0.07, 0.1, 0.15)
 
 """
 Before commiting any changes check this file with:
@@ -43,6 +43,7 @@ def _print(line, constant_speed=False):
     for char in line:
         if char == '<':
             char = '\b \b'
+            sleep(0.2)
         sys.stdout.write(char)
         sys.stdout.flush()
         if constant_speed:
