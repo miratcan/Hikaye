@@ -14,7 +14,6 @@ DIRECTIONS = [NORTH, SOUTH, WEST, EAST]
 GAME_STATUSES = [PLAYING, GAME_OVER]
 
 TYPING_SPEED = 0.05
-TYPING_SPEED_TOLERANCE = 0.05
 
 """
 Before commiting any changes check this file with:
@@ -42,12 +41,16 @@ def reverse_direction(direction):
 
 def _print(line, constant_speed=False):
     for char in line:
-	sys.stdout.write(char)
-	sys.stdout.flush()
-	speed = TYPING_SPEED
+        sys.stdout.write(char)
+        sys.stdout.flush()
+        speed = TYPING_SPEED
+        if constant_speed:
+            speed = TYPING_SPEED
+        else:
+            speed = (randint(1, 100) / 100.0) * TYPING_SPEED
         sleep(speed)
-    print
-
+    sys.stdout.write('\n')
+    sys.stdout.flush()
 
 class GameObject(object):
 
@@ -245,7 +248,7 @@ class Player(Human):
     def look_around(self):
         _print(self.place.name)
         _print('-' * len(self.place.name), constant_speed=True)
-	if self.place.description:
+        if self.place.description:
             _print(self.place.description)
 
 
@@ -283,7 +286,7 @@ class Game(object):
         self.player = Player('Player')
 
     def start(self):
-	_print('\n' * 20)
+        _print('\n' * 20)
         self.player.look_around()
 
     def __repr__(self):
