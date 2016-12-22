@@ -1,4 +1,4 @@
-from random import randint
+from random import choice, randint
 import sys
 from time import sleep
 
@@ -13,7 +13,7 @@ GAME_OVER = 'GO'
 DIRECTIONS = [NORTH, SOUTH, WEST, EAST]
 GAME_STATUSES = [PLAYING, GAME_OVER]
 
-TYPING_SPEED = 0.05
+TYPING_SPEED = (0.05, 0.07, 0.1, 0.15, 0.20, 0.25)
 
 """
 Before commiting any changes check this file with:
@@ -41,13 +41,14 @@ def reverse_direction(direction):
 
 def _print(line, constant_speed=False):
     for char in line:
+        if char == '<':
+            char = '\b \b'
         sys.stdout.write(char)
         sys.stdout.flush()
-        speed = TYPING_SPEED
         if constant_speed:
-            speed = TYPING_SPEED
+            speed = 0.1
         else:
-            speed = (randint(1, 100) / 100.0) * TYPING_SPEED
+            speed = choice(TYPING_SPEED)
         sleep(speed)
     sys.stdout.write('\n')
     sys.stdout.flush()
@@ -247,7 +248,10 @@ class Human(Creature):
 class Player(Human):
     def look_around(self):
         _print(self.place.name)
-        _print('-' * len(self.place.name), constant_speed=True)
+        name_length = len(self.place.name)
+        wrong_length = randint(3, 8)
+        _print(('-' * (name_length + wrong_length)) + \
+                '<' * wrong_length, constant_speed=True)
         if self.place.description:
             _print(self.place.description)
 

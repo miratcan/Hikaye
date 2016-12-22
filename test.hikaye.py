@@ -6,15 +6,16 @@ from hikaye import NORTH
 places = PlaceContainer([
     Place(
         "Yatak Odasi",
-
-        "Dün gece çok soguktu. Rüzgarın suları donduracak soğukluğunu " \
-        "kemiklerinde hissetmiştin. Üzerinde bir kazak ve soğuktan " \
+        "Merhaba<<<<<<<Selamlar<<<<<<<<Yazacaklarım biraz uzun gelebilir."
+        "< ama yine de bir yerden başlamak zorundayım. Bak, "
+        "dün gece çok soguk<<<ğuktu. Rüzgarın suları donduracak soğukluğunu " \
+        "kemiklerinde hissetmiştin<m. Üzerin<mdede<< de bir kazak ve soğuktan " \
         "koruyamayacak kadar ince bir de palton vardı. Üşümene aldırmadan " \
         "bir o sokaktan bir o sokağa gezip durmustun. Evlerde " \
         "yakılan kömürden çıkan pis havanın kokusunu en derinlerde " \
-        "hissetmiştin. Evinin olduğu Sokağın köşesine geldiğinde durdun. "
-        "Gecenin karanlığını yok edip sokağı zar zor aydınlatan sokak "
-        "lambasının altında son sigaranı içtin. Etrafta " \
+        "hissetmiştin. Evinin olduğu Sok<<<sokağın köşesine geldiğinde durdun. "
+        "Gecenin karanlığını yok edip sokağı<<<<<<etrafı zar zor aydınlatan "
+        "sokak lambasının altında son sigaranı içtin. Etrafta " \
         "kimseler görünmüyordu. Gün herkes için bitmişti, kendin için de "
         "bitmesini dilemekten başka da bir çaren yok gibi gözüküyordu. "
         "İlerden kavga eden iki kedinin bağrışmaları gelirken apartmana " \
