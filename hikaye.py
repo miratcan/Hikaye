@@ -54,6 +54,7 @@ def _print(line, constant_speed=False):
     sys.stdout.write('\n')
     sys.stdout.flush()
 
+
 class GameObject(object):
 
     """Base for all game objects."""
@@ -75,7 +76,7 @@ that explains name of the object.
         self.name = args[0]
 
         if len(args) == 2:
-           self.description = args[1]
+            self.description = args[1]
 
     def __repr__(self):
         """Representation for GameObject."""
@@ -101,8 +102,8 @@ class Container(list):
     >>> container.append(None)
     Traceback (most recent call last):
     ...
-    AssertionError: This container only hold objects that inherited
-    from <class '__main__.Foo'>.
+    AssertionError: This container only hold objects that inherited from \
+<class '__main__.Foo'>.
 
     Also containers are list but they can call objects with their names.
 
@@ -154,8 +155,7 @@ class Place(GameObject):
         """
         A place can be initialized with a description:
 
-        >>> place = Place('House of King',
-        >>>     description='Very nice decorated place')
+        >>> place = Place('House of King', 'Very nice decorated place')
         >>> place
         <Place: House of King>
         >>> place.description
@@ -182,6 +182,7 @@ class Place(GameObject):
 
 
 class PlaceContainer(Container):
+
     """
     Container for places. They have ability to connect places together and
     """
@@ -228,6 +229,7 @@ class ObjectContainer(Container):
 
 
 class Creature(GameObject):
+
     """
     Base model for all living creatures in game.
     """
@@ -247,12 +249,13 @@ class Human(Creature):
 
 
 class Player(Human):
+
     def look_around(self):
         _print(self.place.name)
         name_length = len(self.place.name)
         wrong_length = randint(3, 8)
-        _print(('-' * (name_length + wrong_length)) + \
-                '<' * wrong_length, constant_speed=True)
+        _print(('-' * (name_length + wrong_length)) +
+               '<' * wrong_length, constant_speed=True)
         if self.place.description:
             _print(self.place.description)
 
@@ -263,14 +266,13 @@ class Game(object):
         """
         Container for game state.
 
-        >>> place_1 = Place('My Room',
-        >>>     description="It is so dark here, I can not see anything")
-        >>> place_2 = Place('Corridor',
-        >>>     description='A radio playing')
-        >>> place_3 = Place('Bathroom', description='I see my face!')
-        >>> game = Game('Nameless Guest', author='Mirat',
-        >>>     places=[place_1, place_2, place_3])
-        >>>
+        >>> place_1 = Place('My Room', \
+                "It is so dark here, I can not see anything")
+        >>> place_2 = Place('Corridor', \
+                'A radio playing')
+        >>> place_3 = Place('Bathroom', 'I see my face!')
+        >>> game = Game('Nameless Guest', author='Mirat', \
+                places=[place_1, place_2, place_3])
         >>> print game
         Nameless Guest game by Mirat
 
@@ -291,7 +293,6 @@ class Game(object):
         self.player = Player('Player')
 
     def start(self):
-        _print('\n' * 20)
         self.player.look_around()
 
     def __repr__(self):
