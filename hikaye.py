@@ -1,6 +1,8 @@
+from re import sub
+from sys import stdout
 from random import choice, randint
-import sys
 from time import sleep
+from textwrap import wrap
 
 NORTH = 'N'
 SOUTH = 'S'
@@ -13,7 +15,7 @@ GAME_OVER = 'GO'
 DIRECTIONS = [NORTH, SOUTH, WEST, EAST]
 GAME_STATUSES = [PLAYING, GAME_OVER]
 
-TYPING_SPEED = (0.05, 0.07, 0.1, 0.15)
+MAX_WIDTH = 79
 
 """
 Before commiting any changes check this file with:
@@ -39,20 +41,200 @@ def reverse_direction(direction):
             WEST: EAST, EAST: WEST}[direction]
 
 
-def _print(line, constant_speed=False):
-    for char in line:
-        if char == '<':
-            char = '\b \b'
-            sleep(0.2)
-        sys.stdout.write(char)
-        sys.stdout.flush()
-        if constant_speed:
-            speed = 0.1
-        else:
-            speed = choice(TYPING_SPEED)
-        sleep(speed)
-    sys.stdout.write('\n')
-    sys.stdout.flush()
+class Command(object):
+    def __init__(self, name, method_name, description=None,
+                 alternative_names=()):
+        """
+        >>> cont = Controller(None)
+        >>> list(cont.commands)
+        [<examine command that runs: cmd_examine method>, <open command that \
+runs: cmd_open method>]
+        """
+        self.name = name
+        self.method_name = method_name
+        self.description = description
+        self.alternative_names = alternative_names
+
+    def __repr__(self):
+        return '<%s command that runs: %s method>' % (
+            self.name, self.get_method_name())
+
+    def get_method_name(self):
+        return 'cmd_%s' % self.method_name
+
+
+class Controller(object):
+    """
+    COMMANDS are lists that contains information in this template:
+    ((command_name, alternative_name1, alternative_name2), method_to_run,
+     description))
+    """
+
+    COMMANDS = (
+
+        (('examine', 'x'), 'examine',
+         'Examine an object.\nExample:\nexamine me<enter>\n\nI\'m a good '
+         'guy.'),
+
+        (('open', 'o'), 'open',
+         'Try to open an object. Example: open door<enter>\n\nDoor is '
+         'opened.'),
+    )
+
+    @staticmethod
+    def command_factory(command_tuples):
+
+        """
+        Factory for command objects. Get and command_list and return a list
+        that contains commands.
+        >>> cmds = list(Controller.command_factory(((('a', 'b'), 'c', 'd'),)))
+        >>> cmds
+        [<a command that runs: cmd_c method>]
+        >>> cmds[0].description
+        'd'
+        """
+        for i in command_tuples:
+            args = (i[0][0], i[1],)
+            kwargs = {'description': i[2]}
+            if len(i[0]) > 1:
+                kwargs['alternative_names'] = i[0][1:]
+            yield Command(*args, **kwargs)
+
+    def execute_command(self, command, args=[], kwargs={}):
+        method_name = command.get_method_name()
+        return getattr(self, method_name)(*args, **kwargs)
+
+    def cmd_examine(self):
+        self.obj.view.display()
+
+    def __init__(self, obj, *args, **kwargs):
+        self.obj = obj
+        self.commands = list(Controller.command_factory(self.COMMANDS))
+        super(Controller, self).__init__(*args, **kwargs)
+
+
+class PlayerController(Controller):
+
+    COMMANDS = (
+        (('north', 'n'), 'go_north', 'Try to go north.'),
+        (('south', 's'), 'go_south', 'Try to go south.'),
+        (('west', 'w'), 'go_west', 'Try to go west.'),
+        (('east', 'e'), 'go_north', 'Try to go east.'),
+
+    )
+
+    def go_somewhere(self, way):
+        """
+        >>> place1 = Place('Place1')
+        >>> place2 = Place('Place2')
+        >>> place3 = Place('Place3')
+        >>> places = PlaceContainer((place1, place2, place3))
+        >>> places.connect('Place1', NORTH, 'Place2')
+        >>> places.connect('Place2', NORTH, 'Place3')
+        >>> player = Player('Tomb Raider')
+        >>> player.place = place1
+        >>> player.place
+        <Place: Place1>
+        >>> player.controller.cmd_go_north()
+        Place2
+        ------
+        >>> player.place
+        <Place: Place2>
+        >>> player.controller.cmd_go_north()
+        Place3
+        ------
+        >>> player.place
+        <Place: Place3>
+        """
+        assert hasattr(self.obj, 'place'), 'Player is at nowhere.'
+        assert way in self.obj.place.exits, 'Can not go that way!'
+        self.obj.place = self.obj.place.exits[way]
+        self.obj.place.view.display()
+
+    def cmd_go_north(self):
+        return self.go_somewhere(NORTH)
+
+
+class ViewBase(object):
+    def __init__(self, obj):
+        self.obj = obj
+
+
+class PrintView(ViewBase):
+
+    def clean(self, line):
+        result = line
+        result = sub(' +', ' ', line)
+        result = line.replace('<', '')
+        return result
+
+    def _print(self, line):
+        print self.clean(line)
+
+    def display(self):
+        self._print(self.obj.name)
+        self._print('-' * len(self.obj.name))
+        if hasattr(self.obj, 'description'):
+            self._print(self.obj.description + '\n')
+
+
+class TypeWriterView(ViewBase):
+
+    TYPING_SPEED = (0.05, 0.07, 0.1, 0.15)
+    # TYPING_SPEED = (0.05,)
+
+    def clean(self, line):
+        result = line
+        result = sub(' +', ' ', line)
+        return result
+
+    def _print(self, line):
+        line = self.clean(line)
+        for char in line:
+            if char == '<':
+                char = '\b \b'
+                sleep(0.2)
+            stdout.write(char)
+            stdout.flush()
+            speed = choice(self.TYPING_SPEED)
+            sleep(speed)
+        stdout.write('\n')
+        stdout.flush()
+
+    def display(self):
+        self._print(self.obj.name)
+        name_length = len(self.obj.name)
+        wrong_length = randint(3, 8)
+        self._print(('-' * (name_length + wrong_length)) +
+                    '<' * wrong_length)
+        if hasattr(self.obj, 'description'):
+            self._print(self.obj.description + '\n')
+
+View = PrintView
+
+
+class HasController(object):
+
+    def __init__(self, *args, **kwargs):
+        super(HasController, self).__init__(*args, **kwargs)
+        self.controller = self.init_controller()
+
+    def init_controller(self):
+        return self.CONTROLLER_CLASS(self)
+
+
+class HasView(object):
+    def __init__(self, *args, **kwargs):
+        """
+        >>> class C1(HasView): VIEW_CLASS=View
+        >>> c1 = C1()
+        >>> assert hasattr(c1, 'view') == True
+        """
+        super(HasView, self).__init__(*args, **kwargs)
+        self.view = self.init_view()
+
+    def init_view(self):
+        return self.VIEW_CLASS(self)
 
 
 class GameObject(object):
@@ -74,9 +256,11 @@ that explains name of the object.
         assert len(args) > 0, 'All game objects must have at least one ' \
                               'argument that explains name of the object.'
         self.name = args[0]
-
         if len(args) == 2:
             self.description = args[1]
+
+        self.can_open = False
+        self.can_move = False
 
     def __repr__(self):
         """Representation for GameObject."""
@@ -145,11 +329,12 @@ class Container(list):
         return self.name_map[name]
 
 
-class Place(GameObject):
+class Place(HasView, GameObject):
 
     """
     Places in game. They contain objects and exits.
     """
+    VIEW_CLASS = View
 
     def __init__(self, *args, **kwargs):
         """
@@ -170,12 +355,12 @@ class Place(GameObject):
         >>> print place.objects
         [<GameObject: Rope>]
         """
-        super(Place, self).__init__(*args)
         self.exits = {}
         self.objects = ObjectContainer()
 
         for _object in kwargs.pop('objects', []):
             self.objects.append(_object)
+        super(Place, self).__init__(*args, **kwargs)
 
     def __repr__(self):
         return '<Place: %s>' % self.name
@@ -248,35 +433,76 @@ class Human(Creature):
     STRENGTH = 30
 
 
-class Player(Human):
+class Player(HasController, HasView, Human):
 
-    def look_around(self):
-        _print(self.place.name)
-        name_length = len(self.place.name)
-        wrong_length = randint(3, 8)
-        _print(('-' * (name_length + wrong_length)) +
-               '<' * wrong_length, constant_speed=True)
-        if self.place.description:
-            _print(self.place.description)
+    VIEW_CLASS = View
+    CONTROLLER_CLASS = PlayerController
+
+    def __repr__(self):
+        return '<Player: %s>' % self.name
 
 
-class Game(object):
+class GameView(View):
+    def display(self):
+        title_1 = self.obj.name
+        self._print('\n\n' + title_1 + '\n\n')
+        if hasattr(self.obj, 'description'):
+            self._print(self.obj.description + '\n')
 
-    def __init__(self, name, author=None, places=[], version='0.0'):
+
+class GameController(Controller):
+    def start(self):
+        self.obj.view.display()
+        self.obj.player.place.view.display()
+
+
+class InputParser(object):
+    """
+    This object parses input, finds command about given input and runs
+    method on conroller with given input.
+    """
+
+    def __init__(self, game):
+        self.game = game
+
+    def get_available_commands(self):
+        """
+        Finds commands from current game, place, player, player inventory and
+        places.
+        >>> game = Game('Title', 'Description')
+        >>> game.places.append(Place('Title', 'Description'))
+        >>> game.player.place = game.places.get('Title')
+        >>> for command in game.input.get_available_commands():
+        ...     print '%s: %s' % (command.name, command.description)
+        north: Try to go north.
+        south: Try to go south.
+        west: Try to go west.
+        east: Try to go east.
+        """
+        commands = self.game.player.controller.commands
+        return commands
+
+
+class Game(HasView, HasController):
+
+    CONTROLLER_CLASS = GameController
+    VIEW_CLASS = GameView
+
+    def __init__(self, name, description, author=None, version='0.0'):
         """
         Container for game state.
 
-        >>> place_1 = Place('My Room', \
-                "It is so dark here, I can not see anything")
-        >>> place_2 = Place('Corridor', \
-                'A radio playing')
-        >>> place_3 = Place('Bathroom', 'I see my face!')
-        >>> game = Game('Nameless Guest', author='Mirat', \
-                places=[place_1, place_2, place_3])
+        >>> game = Game('Nameless Guest', None, author='Mirat')
         >>> print game
         Nameless Guest game by Mirat
 
-        Let's connect the rooms:
+        Add places.
+
+        >>> game.places.append(Place('My Room', "It is so dark here."))
+        >>> game.places.append(Place('Corridor', 'A radio playing'))
+        >>> game.places.append(Place('Bathroom', 'I see my face!'))
+
+        Connect the places:
 
         >>> game.places.connect('My Room', NORTH, 'Corridor')
         >>> game.places.connect('Corridor', NORTH, 'Bathroom')
@@ -286,14 +512,14 @@ class Game(object):
         {'S': <Place: Corridor>}
         """
         self.name = name
+        self.description = description
         self.author = author
         self.version = version
         self.status = PLAYING
-        self.places = PlaceContainer(places)
+        self.places = PlaceContainer()
         self.player = Player('Player')
-
-    def start(self):
-        self.player.look_around()
+        self.input = InputParser(self)
+        super(Game, self).__init__()
 
     def __repr__(self):
         """Representation for game object."""
