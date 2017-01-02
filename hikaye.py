@@ -42,6 +42,11 @@ def reverse_direction(direction):
 
 
 class Command(object):
+
+    """
+    >>> command = Command('a', 'b')
+    """
+
     def __init__(self, name, method_name, description=None,
                  alternative_names=()):
         """
@@ -56,10 +61,20 @@ runs: cmd_open method>]
         self.alternative_names = alternative_names
 
     def __repr__(self):
+        """
+        >>> command = Command('a', 'b')
+        >>> print command
+        <a command that runs: cmd_b method>
+        """
         return '<%s command that runs: %s method>' % (
             self.name, self.get_method_name())
 
     def get_method_name(self):
+        """
+        >>> command = Command('a', 'b')
+        >>> print command.get_method_name()
+        cmd_b
+        """
         return 'cmd_%s' % self.method_name
 
 
@@ -101,6 +116,11 @@ class Controller(object):
             yield Command(*args, **kwargs)
 
     def execute_command(self, command, args=[], kwargs={}):
+        """
+        controller = Controller(None)
+        command = list(controller.get_available_commands())[0]
+        controller.execute_command(command)
+        """
         method_name = command.get_method_name()
         return getattr(self, method_name)(*args, **kwargs)
 
@@ -116,10 +136,10 @@ class Controller(object):
 class PlayerController(Controller):
 
     COMMANDS = (
-        (('north', 'n'), 'go_north', 'Try to go north.'),
-        (('south', 's'), 'go_south', 'Try to go south.'),
-        (('west', 'w'), 'go_west', 'Try to go west.'),
-        (('east', 'e'), 'go_north', 'Try to go east.'),
+        (('go north', 'n'), 'go_north', 'Try to go north.'),
+        (('go south', 's'), 'go_south', 'Try to go south.'),
+        (('go west', 'w'), 'go_west', 'Try to go west.'),
+        (('go east', 'e'), 'go_east', 'Try to go east.'),
 
     )
 
@@ -154,6 +174,15 @@ class PlayerController(Controller):
     def cmd_go_north(self):
         return self.go_somewhere(NORTH)
 
+    def cmd_go_south(self):
+        return self.go_somewhere(SOUTH)
+
+    def cmd_go_west(self):
+        return self.go_somewhere(WEST)
+
+    def cmd_go_east(self):
+        return self.go_somewhere(EAST)
+
 
 class ViewBase(object):
     def __init__(self, obj):
@@ -180,7 +209,7 @@ class PrintView(ViewBase):
 
 class TypeWriterView(ViewBase):
 
-    TYPING_SPEED = (0.05, 0.07, 0.1, 0.15)
+    TYPING_SPEED = (1.0 / 200,)
     # TYPING_SPEED = (0.05,)
 
     def clean(self, line):
@@ -210,7 +239,7 @@ class TypeWriterView(ViewBase):
         if hasattr(self.obj, 'description'):
             self._print(self.obj.description + '\n')
 
-View = PrintView
+View = TypeWriterView
 
 
 class HasController(object):
@@ -454,6 +483,8 @@ class GameController(Controller):
     def start(self):
         self.obj.view.display()
         self.obj.player.place.view.display()
+        while self.obj.status is not GAME_OVER:
+            self.obj.input.run(self.obj.input.get_input())
 
 
 class InputParser(object):
@@ -472,15 +503,45 @@ class InputParser(object):
         >>> game = Game('Title', 'Description')
         >>> game.places.append(Place('Title', 'Description'))
         >>> game.player.place = game.places.get('Title')
-        >>> for command in game.input.get_available_commands():
-        ...     print '%s: %s' % (command.name, command.description)
-        north: Try to go north.
-        south: Try to go south.
-        west: Try to go west.
-        east: Try to go east.
+        >>> for obj, commands in game.input.get_available_commands().iteritems():
+        ...     print obj
+        ...     for command in commands:
+        ...         print command
+        Title game by None
+        <examine command that runs: cmd_examine method>
+        <open command that runs: cmd_open method>
+        <Player: Player>
+        <go north command that runs: cmd_go_north method>
+        <go south command that runs: cmd_go_south method>
+        <go west command that runs: cmd_go_west method>
+        <go east command that runs: cmd_go_east method>
         """
-        commands = self.game.player.controller.commands
-        return commands
+        _commands = {
+            self.game: self.game.controller.commands,
+            self.game.player: self.game.player.controller.commands,
+        }
+        return _commands
+
+    def get_input(self):
+        result = raw_input('What do you want to do? >')
+        print
+        return result
+
+    def run(self, text):
+        """
+        TODO: Can we do this in more pythonic way?
+        """
+        _obj, _command = None, None
+        for obj, commands in self.get_available_commands().iteritems():
+            for command in commands:
+                if text == command.name or text in command.alternative_names:
+                    _obj, _command = obj, command
+                    break
+        if _command:
+            obj.controller.execute_command(_command)
+        else:
+            self.game.view._print('What?\n')
+
 
 
 class Game(HasView, HasController):

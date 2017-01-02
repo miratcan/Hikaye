@@ -4,7 +4,23 @@ from hikaye import Game
 from hikaye import GameObject
 from hikaye import PlaceContainer, ObjectContainer
 from hikaye import Place
-from hikaye import NORTH
+from hikaye import NORTH, SOUTH, WEST, EAST
+
+"""
+          
+          ------------
+          |  Koridor |
+          |  Kuzey   |
+          |          |
+|---------|          |---------|
+| Çalışma |  Koridor |         |
+| Odası   |   Güney  | Mutfak  |
+|---------|----------|---------|
+          |   Antre  |
+          |----------|
+          | Kapı Önü |
+          |----------|
+"""
 
 game = Game(
     "İstanbul Efsaneleri",
@@ -16,7 +32,7 @@ game = Game(
     "Top oyunculardan birinin sert vuruşuyla hemen yan bahçedeki terk "
     "edilmiş evin penceresinden içeri camı kırarak giriyor. Topu kimin "
     "alacağını tartışan arkadaşlarının lafını 'ben alırım' diyerek "
-    "kesiyorsun. Arazi ile terk edilmiş evin bahçesi alçak bir "
+    "kesiyorsun. Arazi ile terk edilmiş evin bahçesi3 alçak bir "
     "duvar ile ayrılıyor. Duvarı atlayıp evin kapısının önüne gidiyorsun.",
     author='Mirat Can Bayrak',)
 
@@ -44,20 +60,42 @@ game.places = PlaceContainer([
     Place(
         "Antre",
         "Biraz onceki aydinlik hal yok oldu. Burasi oldukca serin. "
-        "Sag tarafta calisma odasinin girisi mecvut. Sol tarafta ise misafir "
-        "yatak odasinin girisi."
-    )
+        "Yerde bir çift ayakkabı var. Kuzeyde uzunca bir koridorun güney ucu."
+    ),
+    Place(
+        "Koridor Güney",
+        "Batı ve doğu tarafta iki oda var. Kuzeyde ise koridorun kuzey ucu."
+    ),
+    Place(
+        "Çalışma Odası",
+        "Odada büyük kahverengi bir kitaplık, üzerinde bir sürü eşya olan "
+        "bir çalışma masası mevcut. Duvarda sarı kağıtlara pastel ile "
+        "çizilmiş resimler görüyorsun. Odanın tamamı yetişkin birine aitmiş "
+        "gibi gözükse de duvardaki resimler bir çocuğa ait gibi gözüküyor."
+    ),
+    Place(
+        "Mutfak",
+        "Burası oldukça küçük bir mutfak. Doğu tarafta paslı metal lavabonun "
+        "üstündeki ahşap pencereden maç yaptığınız araziyi görebiliyorsun."
+        "Tavandan bir takım takırtılar geliyor."
+    ),
+    Place(
+        "Salon",
+        "Radyo mumlar tek bir koltuk.")
 ])
 
-""" ------------------------- Place Connections --------------------------- """
+""" ------------------------- Plarme Connections -------------------------- """
 
 game.player.place = game.places.get('Kapının Önü')
 
 """ ------------------------- Game Setup ---------------------------------- """
 
 game.places.connect('Kapının Önü', NORTH, 'Antre')
+game.places.connect('Antre', NORTH, 'Koridor Güney')
+
+game.places.connect('Koridor Güney', WEST, 'Çalışma Odası')
+game.places.connect('Koridor Güney', EAST, 'Mutfak')
 
 """ ------------------------- Game Setup ---------------------------------- """
 
 game.controller.start()
-game.player.controller.cmd_go_north()
