@@ -78,12 +78,27 @@ runs: cmd_open method>]
         return 'cmd_%s' % self.method_name
 
 
+def command_method(aliases):
+    def decorate(func):
+        def call(*args, **kwargs):
+            import ipdb; ipdb.set_trace()
+            func.__class__.commands = {}
+            return func(*args, **kwargs)
+        call.func_name = func.func_name
+        return call
+    return decorate
+
+
 class Controller(object):
     """
     COMMANDS are lists that contains information in this template:
     ((command_name, alternative_name1, alternative_name2), method_to_run,
      description))
     """
+
+    COMMANDS = {
+        'examine': ('examine')
+    }
 
     COMMANDS = (
 
@@ -95,6 +110,10 @@ class Controller(object):
          'Try to open an object. Example: open door<enter>\n\nDoor is '
          'opened.'),
     )
+
+    @command_method(aliases=('examine', 'x'))
+    def test(self):
+        pass
 
     @staticmethod
     def command_factory(command_tuples):
@@ -140,7 +159,6 @@ class PlayerController(Controller):
         (('go south', 's'), 'go_south', 'Try to go south.'),
         (('go west', 'w'), 'go_west', 'Try to go west.'),
         (('go east', 'e'), 'go_east', 'Try to go east.'),
-
     )
 
     def go_somewhere(self, way):
@@ -239,7 +257,7 @@ class TypeWriterView(ViewBase):
         if hasattr(self.obj, 'description'):
             self._print(self.obj.description + '\n')
 
-View = TypeWriterView
+View = PrintView
 
 
 class HasController(object):
@@ -495,6 +513,7 @@ class InputParser(object):
 
     def __init__(self, game):
         self.game = game
+        self.message = 'What do you want to do?'
 
     def get_available_commands(self):
         """
@@ -523,14 +542,11 @@ class InputParser(object):
         return _commands
 
     def get_input(self):
-        result = raw_input('What do you want to do? >')
+        result = raw_input(self.message)
         print
         return result
 
     def run(self, text):
-        """
-        TODO: Can we do this in more pythonic way?
-        """
         _obj, _command = None, None
         for obj, commands in self.get_available_commands().iteritems():
             for command in commands:
@@ -538,7 +554,7 @@ class InputParser(object):
                     _obj, _command = obj, command
                     break
         if _command:
-            obj.controller.execute_command(_command)
+            _obj.controller.execute_command(_command)
         else:
             self.game.view._print('What?\n')
 

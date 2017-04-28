@@ -36,6 +36,8 @@ game = Game(
     "duvar ile ayrılıyor. Duvarı atlayıp evin kapısının önüne gidiyorsun.",
     author='Mirat Can Bayrak',)
 
+game.input.message = 'Ne yapmak istiyorsun?'
+
 """ ------------------------------- Objects ------------------------------- """
 
 game.objects = ObjectContainer([
@@ -84,7 +86,7 @@ game.places = PlaceContainer([
         "Radyo mumlar tek bir koltuk.")
 ])
 
-""" ------------------------- Plarme Connections -------------------------- """
+""" ----------------------- Place Connections ----------------------------- """
 
 game.player.place = game.places.get('Kapının Önü')
 
@@ -97,5 +99,5 @@ game.places.connect('Koridor Güney', WEST, 'Çalışma Odası')
 game.places.connect('Koridor Güney', EAST, 'Mutfak')
 
 """ ------------------------- Game Setup ---------------------------------- """
-
+game.controller.test()
 game.controller.start()
