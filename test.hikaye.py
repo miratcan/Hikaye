@@ -90,6 +90,12 @@ game.places = PlaceContainer([
 
 game.player.place = game.places.get('Kapının Önü')
 
+def kaldir_saksi(self):
+    print "saksının altından yarrak çıktı"
+
+game.objects.get('Saksı').controller.register(
+    kaldir_saksi, ['saksıyı kaldır'])
+
 """ ------------------------- Game Setup ---------------------------------- """
 
 game.player.controller.go_north.im_func.__aliases__ = ['kuzeye git', 'k']
