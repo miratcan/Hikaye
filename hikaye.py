@@ -41,54 +41,6 @@ def reverse_direction(direction):
             WEST: EAST, EAST: WEST}[direction]
 
 
-class Command(object):
-
-    """
-    >>> command = Command('a', 'b')
-    """
-
-    def __init__(self, name, method_name, description=None,
-                 alternative_names=()):
-        """
-        >>> cont = Controller(None)
-        >>> list(cont.commands)
-        [<examine command that runs: cmd_examine method>, <open command that \
-runs: cmd_open method>]
-        """
-        self.name = name
-        self.method_name = method_name
-        self.description = description
-        self.alternative_names = alternative_names
-
-    def __repr__(self):
-        """
-        >>> command = Command('a', 'b')
-        >>> print command
-        <a command that runs: cmd_b method>
-        """
-        return '<%s command that runs: %s method>' % (
-            self.name, self.get_method_name())
-
-    def get_method_name(self):
-        """
-        >>> command = Command('a', 'b')
-        >>> print command.get_method_name()
-        cmd_b
-        """
-        return 'cmd_%s' % self.method_name
-
-
-def command_method(aliases):
-    def decorate(func):
-        def call(*args, **kwargs):
-            import ipdb; ipdb.set_trace()
-            func.__class__.commands = {}
-            return func(*args, **kwargs)
-        call.func_name = func.func_name
-        return call
-    return decorate
-
-
 class Controller(object):
     """
     COMMANDS are lists that contains information in this template:
@@ -96,70 +48,25 @@ class Controller(object):
      description))
     """
 
-    COMMANDS = {
-        'examine': ('examine')
-    }
-
-    COMMANDS = (
-
-        (('examine', 'x'), 'examine',
-         'Examine an object.\nExample:\nexamine me<enter>\n\nI\'m a good '
-         'guy.'),
-
-        (('open', 'o'), 'open',
-         'Try to open an object. Example: open door<enter>\n\nDoor is '
-         'opened.'),
-    )
-
-    @command_method(aliases=('examine', 'x'))
-    def test(self):
-        pass
-
-    @staticmethod
-    def command_factory(command_tuples):
-
-        """
-        Factory for command objects. Get and command_list and return a list
-        that contains commands.
-        >>> cmds = list(Controller.command_factory(((('a', 'b'), 'c', 'd'),)))
-        >>> cmds
-        [<a command that runs: cmd_c method>]
-        >>> cmds[0].description
-        'd'
-        """
-        for i in command_tuples:
-            args = (i[0][0], i[1],)
-            kwargs = {'description': i[2]}
-            if len(i[0]) > 1:
-                kwargs['alternative_names'] = i[0][1:]
-            yield Command(*args, **kwargs)
-
-    def execute_command(self, command, args=[], kwargs={}):
-        """
-        controller = Controller(None)
-        command = list(controller.get_available_commands())[0]
-        controller.execute_command(command)
-        """
-        method_name = command.get_method_name()
-        return getattr(self, method_name)(*args, **kwargs)
-
-    def cmd_examine(self):
+    def examine(self):
         self.obj.view.display()
+
+    def register(self, func, aliases):
+        if not hasattr(func.im_func, '__aliases__'):
+            func.im_func.__aliases__ = []
+        for alias in aliases:
+            if not alias in func.im_func.__aliases__:
+                func.im_func.__aliases__.append(alias)
+        if not hasattr(self, 'commands'):
+            self.commands = type("", (), {})()
+        setattr(self.commands, func.__name__, func)
 
     def __init__(self, obj, *args, **kwargs):
         self.obj = obj
-        self.commands = list(Controller.command_factory(self.COMMANDS))
-        super(Controller, self).__init__(*args, **kwargs)
-
+        self.register(self.examine, ('examine', 'x'))
+        super(Controller, self).__init__()
 
 class PlayerController(Controller):
-
-    COMMANDS = (
-        (('go north', 'n'), 'go_north', 'Try to go north.'),
-        (('go south', 's'), 'go_south', 'Try to go south.'),
-        (('go west', 'w'), 'go_west', 'Try to go west.'),
-        (('go east', 'e'), 'go_east', 'Try to go east.'),
-    )
 
     def go_somewhere(self, way):
         """
@@ -189,17 +96,24 @@ class PlayerController(Controller):
         self.obj.place = self.obj.place.exits[way]
         self.obj.place.view.display()
 
-    def cmd_go_north(self):
+    def go_north(self):
         return self.go_somewhere(NORTH)
 
-    def cmd_go_south(self):
+    def go_south(self):
         return self.go_somewhere(SOUTH)
 
-    def cmd_go_west(self):
+    def go_west(self):
         return self.go_somewhere(WEST)
 
-    def cmd_go_east(self):
+    def go_east(self):
         return self.go_somewhere(EAST)
+
+    def __init__(self, obj):
+        super(PlayerController, self).__init__(obj)
+        self.register(self.go_north, ('go north', 'n'))
+        self.register(self.go_south, ('go south', 's'))
+        self.register(self.go_west, ('go west', 'w'))
+        self.register(self.go_east, ('go east', 'e'))
 
 
 class ViewBase(object):
@@ -251,9 +165,7 @@ class TypeWriterView(ViewBase):
     def display(self):
         self._print(self.obj.name)
         name_length = len(self.obj.name)
-        wrong_length = randint(3, 8)
-        self._print(('-' * (name_length + wrong_length)) +
-                    '<' * wrong_length)
+        self._print(('-' * (name_length - 4)))
         if hasattr(self.obj, 'description'):
             self._print(self.obj.description + '\n')
 
@@ -305,9 +217,6 @@ that explains name of the object.
         self.name = args[0]
         if len(args) == 2:
             self.description = args[1]
-
-        self.can_open = False
-        self.can_move = False
 
     def __repr__(self):
         """Representation for GameObject."""
@@ -546,18 +455,21 @@ class InputParser(object):
         print
         return result
 
-    def run(self, text):
-        _obj, _command = None, None
+    def find_command(self, text):
         for obj, commands in self.get_available_commands().iteritems():
-            for command in commands:
-                if text == command.name or text in command.alternative_names:
-                    _obj, _command = obj, command
-                    break
-        if _command:
-            _obj.controller.execute_command(_command)
-        else:
-            self.game.view._print('What?\n')
+            for command in dir(commands):
+                method = getattr(commands, command)
+                if hasattr(method, '__aliases__') and text in \
+                   method.__aliases__:
+                    return obj, method
 
+    def run(self, text):
+        command = self.find_command(text)
+        if not command:
+            self.game.view._print('What?\n')
+            return
+        obj, command = command
+        command()
 
 
 class Game(HasView, HasController):

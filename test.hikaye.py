@@ -36,7 +36,7 @@ game = Game(
     "duvar ile ayrılıyor. Duvarı atlayıp evin kapısının önüne gidiyorsun.",
     author='Mirat Can Bayrak',)
 
-game.input.message = 'Ne yapmak istiyorsun?'
+game.input.message = 'Ne yapmak istiyorsun? '
 
 """ ------------------------------- Objects ------------------------------- """
 
@@ -92,6 +92,11 @@ game.player.place = game.places.get('Kapının Önü')
 
 """ ------------------------- Game Setup ---------------------------------- """
 
+game.player.controller.go_north.im_func.__aliases__ = ['kuzeye git', 'k']
+game.player.controller.go_south.im_func.__aliases__ = ['güneye git', 's']
+game.player.controller.go_west.im_func.__aliases__ = ['batıya git', 'b']
+game.player.controller.go_east.im_func.__aliases__ = ['doğuya git', 'd']
+
 game.places.connect('Kapının Önü', NORTH, 'Antre')
 game.places.connect('Antre', NORTH, 'Koridor Güney')
 
@@ -99,5 +104,4 @@ game.places.connect('Koridor Güney', WEST, 'Çalışma Odası')
 game.places.connect('Koridor Güney', EAST, 'Mutfak')
 
 """ ------------------------- Game Setup ---------------------------------- """
-game.controller.test()
 game.controller.start()
