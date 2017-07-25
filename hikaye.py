@@ -1,8 +1,4 @@
-from re import sub
-from sys import stdout
-from random import choice, randint
-from time import sleep
-from textwrap import wrap
+# -*- coding: utf-8 -*-
 
 NORTH = 'N'
 SOUTH = 'S'
@@ -15,506 +11,314 @@ GAME_OVER = 'GO'
 DIRECTIONS = [NORTH, SOUTH, WEST, EAST]
 GAME_STATUSES = [PLAYING, GAME_OVER]
 
-MAX_WIDTH = 79
-
-"""
-Before commiting any changes check this file with:
-python hikaye.py
-pep8 hikaye.py
-pep257 hikaye.py
-"""
-
 
 def reverse_direction(direction):
-    """Reverse given direction.
+    return {NORTH: SOUTH, SOUTH: NORTH, WEST: EAST, EAST: WEST}[direction]
 
-    >>> reverse_direction(NORTH) == SOUTH
-    True
-    >>> reverse_direction(SOUTH) == NORTH
-    True
-    >>> reverse_direction(WEST) == EAST
-    True
-    >>> reverse_direction(EAST) == WEST
-    True
+
+class cached_property(object):
+    def __init__(self, func):
+        self.__doc__ = getattr(func, '__doc__')
+        self.func = func
+
+    def __get__(self, obj, cls):
+        if obj is None:
+            return self
+        value = obj.__dict__[self.func.__name__] = self.func(obj)
+        return value
+
+
+class Word(object):
     """
-    return {NORTH: SOUTH, SOUTH: NORTH,
-            WEST: EAST, EAST: WEST}[direction]
-
-
-class Controller(object):
-    """
-    COMMANDS are lists that contains information in this template:
-    ((command_name, alternative_name1, alternative_name2), method_to_run,
-     description))
     """
 
-    def examine(self):
-        self.obj.view.display()
+    llv_accusative_case_suffixes = {
+        u'a': u'yı', u'e': u'yi', u'ı': u'yı', u'i': u'yi', u'o': u'yu',
+        u'ö': u'yü', u'u': u'yu', u'ü': u'yü'
+    }
 
-    def register(self, func, aliases):
-        if not hasattr(func.im_func, '__aliases__'):
-            func.im_func.__aliases__ = []
-        for alias in aliases:
-            if not alias in func.im_func.__aliases__:
-                func.im_func.__aliases__.append(alias)
-        if not hasattr(self, 'commands'):
-            self.commands = type("", (), {})()
-        setattr(self.commands, func.__name__, func)
+    llo_accusative_case_suffixes = {
+        u'a': u'i', u'e': u'i', u'ı': u'ı', u'i': u'i', u'o': u'u',
+        u'ö': u'ü', u'u': u'u', u'ü': u'ü'
+    }
 
-    def __init__(self, obj, *args, **kwargs):
-        self.obj = obj
-        self.register(self.examine, ('examine', 'x'))
-        super(Controller, self).__init__()
+    llv_genetive_case_suffixes = {
+        u'a': u'nın', u'e': u'nin', u'ı': u'nın', u'i': u'nin', u'o': u'nun',
+        u'ö': u'nün', u'u': u'nun', u'ü': u'nün'
+    }
 
-class PlayerController(Controller):
+    llo_genetive_case_suffixes = {
+        u'a': u'in', u'e': u'in', u'ı': u'ın', u'i': u'in', u'o': u'un',
+        u'ö': u'ün', u'u': u'un', u'ü': u'ün'
+    }
 
-    def go_somewhere(self, way):
+    def __init__(self, word):
+        self.word = word
+
+    def get_last_vowel_info(self):
         """
-        >>> place1 = Place('Place1')
-        >>> place2 = Place('Place2')
-        >>> place3 = Place('Place3')
-        >>> places = PlaceContainer((place1, place2, place3))
-        >>> places.connect('Place1', NORTH, 'Place2')
-        >>> places.connect('Place2', NORTH, 'Place3')
-        >>> player = Player('Tomb Raider')
-        >>> player.place = place1
-        >>> player.place
-        <Place: Place1>
-        >>> player.controller.cmd_go_north()
-        Place2
-        ------
-        >>> player.place
-        <Place: Place2>
-        >>> player.controller.cmd_go_north()
-        Place3
-        ------
-        >>> player.place
-        <Place: Place3>
+        >>> assert Word('saat').get_last_vowel_info() == (False, 'a')
+        >>> assert Word('puma').get_last_vowel_info() == (True, 'a')
         """
-        assert hasattr(self.obj, 'place'), 'Player is at nowhere.'
-        assert way in self.obj.place.exits, 'Can not go that way!'
-        self.obj.place = self.obj.place.exits[way]
-        self.obj.place.view.display()
+        w = self.word
+        v = self.llv_accusative_case_suffixes
+        lv = None
+        for i in range(len(w) - 1, -1, -1):
+            if w[i] in v:
+                lv = w[i]
+                break
+        if not lv:
+            return False, False
+        if i == len(w) - 1:
+            return True, lv
+        return False, lv
 
-    def go_north(self):
-        return self.go_somewhere(NORTH)
-
-    def go_south(self):
-        return self.go_somewhere(SOUTH)
-
-    def go_west(self):
-        return self.go_somewhere(WEST)
-
-    def go_east(self):
-        return self.go_somewhere(EAST)
-
-    def __init__(self, obj):
-        super(PlayerController, self).__init__(obj)
-        self.register(self.go_north, ('go north', 'n'))
-        self.register(self.go_south, ('go south', 's'))
-        self.register(self.go_west, ('go west', 'w'))
-        self.register(self.go_east, ('go east', 'e'))
-
-
-class ViewBase(object):
-    def __init__(self, obj):
-        self.obj = obj
-
-
-class PrintView(ViewBase):
-
-    def clean(self, line):
-        result = line
-        result = sub(' +', ' ', line)
-        result = line.replace('<', '')
-        return result
-
-    def _print(self, line):
-        print self.clean(line)
-
-    def display(self):
-        self._print(self.obj.name)
-        self._print('-' * len(self.obj.name))
-        if hasattr(self.obj, 'description'):
-            self._print(self.obj.description + '\n')
-
-
-class TypeWriterView(ViewBase):
-
-    TYPING_SPEED = (1.0 / 200,)
-    # TYPING_SPEED = (0.05,)
-
-    def clean(self, line):
-        result = line
-        result = sub(' +', ' ', line)
-        return result
-
-    def _print(self, line):
-        line = self.clean(line)
-        for char in line:
-            if char == '<':
-                char = '\b \b'
-                sleep(0.2)
-            stdout.write(char)
-            stdout.flush()
-            speed = choice(self.TYPING_SPEED)
-            sleep(speed)
-        stdout.write('\n')
-        stdout.flush()
-
-    def display(self):
-        self._print(self.obj.name)
-        name_length = len(self.obj.name)
-        self._print(('-' * (name_length - 4)))
-        if hasattr(self.obj, 'description'):
-            self._print(self.obj.description + '\n')
-
-View = PrintView
-
-
-class HasController(object):
-
-    def __init__(self, *args, **kwargs):
-        super(HasController, self).__init__(*args, **kwargs)
-        self.controller = self.init_controller()
-
-    def init_controller(self):
-        return self.CONTROLLER_CLASS(self)
-
-
-class HasView(object):
-    def __init__(self, *args, **kwargs):
+    def accusative(self):
         """
-        >>> class C1(HasView): VIEW_CLASS=View
-        >>> c1 = C1()
-        >>> assert hasattr(c1, 'view') == True
+        >>> assert Word('saat').accusative() == 'saati'
         """
-        super(HasView, self).__init__(*args, **kwargs)
-        self.view = self.init_view()
+        is_vowel_last_letter, vowel = self.get_last_vowel_info()
+        if is_vowel_last_letter:
+            return self.word + self.llv_accusative_case_suffixes[vowel]
+        else:
+            return self.word + self.llo_accusative_case_suffixes[vowel]
 
-    def init_view(self):
-        return self.VIEW_CLASS(self)
-
-
-class GameObject(object):
-
-    """Base for all game objects."""
-
-    def __init__(self, *args, **kwargs):
+    def is_accusative(self):
         """
-        All game objects must have a name, given as first argument at
-        initalization.
-
-        >>> _object = GameObject('Foo')
-        >>> _object = GameObject()
-        Traceback (most recent call last):
-         ...
-        AssertionError: All game objects must have at least one argument \
-that explains name of the object.
+        >>> assert Word('saati').is_accusative() == (True, 'i')
         """
-        assert len(args) > 0, 'All game objects must have at least one ' \
-                              'argument that explains name of the object.'
-        self.name = args[0]
-        if len(args) == 2:
-            self.description = args[1]
+        is_vowel_last_letter, vowel = self.get_last_vowel_info()
+        if not is_vowel_last_letter:
+            suffixes = self.llv_accusative_case_suffixes.values()
+        else:
+            suffixes = self.llo_accusative_case_suffixes.values()
+        found = filter(self.word.endswith, suffixes)
+        if found:
+            return True, found[0]
+        return False, ''
 
-    def __repr__(self):
-        """Representation for GameObject."""
-        return '<GameObject: %s>' % self.name
-
-
-class Container(list):
-
-    """
-    Containers are list like objects that can only hold one object with
-    same name. Also you can get an object from list with calling it's name.
-
-    >>> class Foo(GameObject): pass
-    >>> class FooContainer(Container): obj_type=Foo
-    >>> container = FooContainer()
-
-    The container that we specified can contain Foo objects.
-
-    >>> container.append(Foo('Mirat'))
-
-    If we try to add another kind of object it will raise error.
-
-    >>> container.append(None)
-    Traceback (most recent call last):
-    ...
-    AssertionError: This container only hold objects that inherited from \
-<class '__main__.Foo'>.
-
-    Also containers are list but they can call objects with their names.
-
-    >>> container.get('Mirat')
-    <GameObject: Mirat>
-
-    Also containers can be initialized like lists.
-
-    >>> container = FooContainer((Foo('Mirat'), Foo('Ayfer')))
-    >>> container.get('Ayfer')
-    <GameObject: Ayfer>
-    >>> container.get('Mirat')
-    <GameObject: Mirat>
-    """
-
-    name_map = {}
-    obj_type = None
-
-    SUBCLASS_ERR_TEXT = 'This container only hold objects that inherited ' \
-                        'from %s.'
-
-    DUPLICATE_ERR_TEXT = 'Object with this name is already exists.'
-
-    def __init__(self, *args):
-        if args:
-            for item in args[0]:
-                self.name_map[item.name] = item
-        super(Container, self).__init__(*args)
-
-    def append(self, value):
-        assert issubclass(value.__class__, self.obj_type), \
-            self.SUBCLASS_ERR_TEXT % self.obj_type
-        assert value.name not in self.name_map, \
-            self.SUBCLASS_ERR_TEXT
-        self.name_map[value.name] = value
-        super(Container, self).append(value)
-
-    def get(self, name):
-        return self.name_map[name]
-
-
-class Place(HasView, GameObject):
-
-    """
-    Places in game. They contain objects and exits.
-    """
-    VIEW_CLASS = View
-
-    def __init__(self, *args, **kwargs):
+    def genetive(self):
         """
-        A place can be initialized with a description:
-
-        >>> place = Place('House of King', 'Very nice decorated place')
-        >>> place
-        <Place: House of King>
-        >>> place.description
-        'Very nice decorated place'
-
-        Also a place can contain objects:
-
-        >>> rope = GameObject('Rope')
-        >>> place = Place('Hunter Hut', objects=[rope])
-        >>> print place
-        <Place: Hunter Hut>
-        >>> print place.objects
-        [<GameObject: Rope>]
+        >>> assert Word('saat').genetive() == 'saatin'
         """
-        self.exits = {}
-        self.objects = ObjectContainer()
+        is_vowel_last_letter, vowel = self.get_last_vowel_info()
+        if is_vowel_last_letter:
+            return self.word + self.llv_genetive_case_suffixes[vowel]
+        else:
+            return self.word + self.llo_genetive_case_suffixes[vowel]
 
-        for _object in kwargs.pop('objects', []):
-            self.objects.append(_object)
-        super(Place, self).__init__(*args, **kwargs)
-
-    def __repr__(self):
-        return '<Place: %s>' % self.name
-
-
-class PlaceContainer(Container):
-
-    """
-    Container for places. They have ability to connect places together and
-    """
-
-    obj_type = Place
-
-    def connect(self, place1_name, direction, place2_name):
-        """Connect two places together. This method used to build maps.
-
-        >>> king_house = Place('House of King')
-        >>> a_forest = Place('Forest')
-        >>> places = PlaceContainer((king_house, a_forest))
-        >>> print places
-        [<Place: House of King>, <Place: Forest>]
-        >>> places.connect('House of King', NORTH, 'Forest')
-        >>> king_house.exits
-        {'N': <Place: Forest>}
-        >>> a_forest.exits
-        {'S': <Place: House of King>}
+    def is_genetive(self):
         """
-        self.get(place1_name).exits[direction] = self.get(place2_name)
-        self.get(place2_name).exits[reverse_direction(direction)] \
-            = self.get(place1_name)
-
-    def add_object(self, place_name, game_object):
-        """ Adds object to place.
-
-        >>> lamer_house = Place('Lamer House')
-        >>> television = GameObject('Television')
-        >>> places = PlaceContainer((lamer_house,))
-        >>> places.add_object('Lamer House', television)
-        >>> places.get('Lamer House').objects
-        [<GameObject: Television>]
-        >>> places.get('Lamer House').objects
-        [<GameObject: Television>]
+        >>> assert Word('saatin').is_genetive() == (True, 'in')
         """
-        place = self.get(place_name)
-        place.objects.append(game_object)
-        game_object.place = place
+        is_vowel_last_letter, vowel = self.get_last_vowel_info()
+        if is_vowel_last_letter:
+            suffixes = self.llv_genetive_case_suffixes.values()
+        else:
+            suffixes = self.llo_genetive_case_suffixes.values()
+        found = filter(self.word.endswith, suffixes)
+        if found:
+            return True, found[0]
+        return False, ''
 
 
-class ObjectContainer(Container):
-    obj_type = GameObject
+class GameObjectView(object):
+    @staticmethod
+    def display(_object):
+        print _object.name
+        if _object.description:
+            print '-' * len(_object.name)
+            print _object.description
+
+    @staticmethod
+    def out(text):
+        print text
 
 
-class Creature(GameObject):
-
-    """
-    Base model for all living creatures in game.
-    """
-    HITPOINTS = 30
-    DEXERITY = 30
-    STRENGTH = 30
-
-    def __init__(self, *args, **kwargs):
-        super(Creature, self).__init__(*args, **kwargs)
-        self.hitpoints = kwargs.pop('hitpoints', self.HITPOINTS)
-
-
-class Human(Creature):
-    HITPOINTS = 100
-    DEXERITY = 60
-    STRENGTH = 30
-
-
-class Player(HasController, HasView, Human):
-
-    VIEW_CLASS = View
-    CONTROLLER_CLASS = PlayerController
-
-    def __repr__(self):
-        return '<Player: %s>' % self.name
-
-
-class GameView(View):
-    def display(self):
-        title_1 = self.obj.name
-        self._print('\n\n' + title_1 + '\n\n')
-        if hasattr(self.obj, 'description'):
-            self._print(self.obj.description + '\n')
-
-
-class GameController(Controller):
-    def start(self):
-        self.obj.view.display()
-        self.obj.player.place.view.display()
-        while self.obj.status is not GAME_OVER:
-            self.obj.input.run(self.obj.input.get_input())
-
-
-class InputParser(object):
-    """
-    This object parses input, finds command about given input and runs
-    method on conroller with given input.
-    """
-
-    def __init__(self, game):
-        self.game = game
-        self.message = 'What do you want to do?'
-
-    def get_available_commands(self):
-        """
-        Finds commands from current game, place, player, player inventory and
-        places.
-        >>> game = Game('Title', 'Description')
-        >>> game.places.append(Place('Title', 'Description'))
-        >>> game.player.place = game.places.get('Title')
-        >>> for obj, commands in game.input.get_available_commands().iteritems():
-        ...     print obj
-        ...     for command in commands:
-        ...         print command
-        Title game by None
-        <examine command that runs: cmd_examine method>
-        <open command that runs: cmd_open method>
-        <Player: Player>
-        <go north command that runs: cmd_go_north method>
-        <go south command that runs: cmd_go_south method>
-        <go west command that runs: cmd_go_west method>
-        <go east command that runs: cmd_go_east method>
-        """
-        _commands = {
-            self.game: self.game.controller.commands,
-            self.game.player: self.game.player.controller.commands,
-        }
-        return _commands
-
-    def get_input(self):
-        result = raw_input(self.message)
-        print
-        return result
-
-    def find_command(self, text):
-        for obj, commands in self.get_available_commands().iteritems():
-            for command in dir(commands):
-                method = getattr(commands, command)
-                if hasattr(method, '__aliases__') and text in \
-                   method.__aliases__:
-                    return obj, method
-
-    def run(self, text):
-        command = self.find_command(text)
-        if not command:
-            self.game.view._print('What?\n')
-            return
-        obj, command = command
-        command()
-
-
-class Game(HasView, HasController):
-
-    CONTROLLER_CLASS = GameController
-    VIEW_CLASS = GameView
-
-    def __init__(self, name, description, author=None, version='0.0'):
-        """
-        Container for game state.
-
-        >>> game = Game('Nameless Guest', None, author='Mirat')
-        >>> print game
-        Nameless Guest game by Mirat
-
-        Add places.
-
-        >>> game.places.append(Place('My Room', "It is so dark here."))
-        >>> game.places.append(Place('Corridor', 'A radio playing'))
-        >>> game.places.append(Place('Bathroom', 'I see my face!'))
-
-        Connect the places:
-
-        >>> game.places.connect('My Room', NORTH, 'Corridor')
-        >>> game.places.connect('Corridor', NORTH, 'Bathroom')
-        >>> game.places.get('My Room').exits
-        {'N': <Place: Corridor>}
-        >>> game.places.get('Bathroom').exits
-        {'S': <Place: Corridor>}
-        """
-        self.name = name
+class BaseGameObject(object):
+    def __init__(self, name, description=None, parent=None):
+        self.name = name.lower()
         self.description = description
-        self.author = author
-        self.version = version
-        self.status = PLAYING
-        self.places = PlaceContainer()
-        self.player = Player('Player')
-        self.input = InputParser(self)
-        super(Game, self).__init__()
+        self.children = []
+        self.parent = None
+        self.view = GameObjectView
+        if parent:
+            self.set_parent(parent)
 
     def __repr__(self):
-        """Representation for game object."""
-        return '%s game by %s' % (self.name, self.author)
+        return u'<GameObject: %s>' % self.name
+
+    def set_parent(self, something):
+        self.parent = something
+        something.children.append(self)
 
 
-if __name__ == '__main__':
+class Place(BaseGameObject):
+    def __init__(self, *args, **kwargs):
+        super(Place, self).__init__(*args, **kwargs)
+        self.exits = {}
+
+    def connect(self, other_place, direction):
+        self.exits[direction] = other_place
+        other_place.exits[reverse_direction(direction)] = self
+
+
+class GameObject(BaseGameObject):
+    pass
+
+
+class PlayerController(object):
+
+    DEFAULT_ACTION_RESPONSES = {
+        'take': u'Bunu yerinde bıraksam daha iyi olacak.',
+        'read': u'Üzerinde okuyacak bir şey göremedim.',
+        'taste': u'Bu şeyi ağzıma sokmasam daha iyi olacak.',
+        'eat': u'Bunu yapabileceğimi hiç ama hiç sanmıyorum.',
+        'pull': u'Bu olduğu yere sabitlenmiş.',
+        'push': u'Gücüm buna asla yetmez.'
+    }
+
+    commands = {
+
+        u'<nesneyi> oku': 'read',
+        u'<nesneyi> tat': 'taste',
+        u'<nesneyi> ye': 'eat',
+        u'<nesneyi> al': 'take',
+        u'<nesneyi> aç': 'open',
+        u'<nesneyi> incele': 'examine',
+
+        u'<nesneyi> <nesnenin> içine koy': 'put_smth_into_smth',
+        u'<nesneye> <nesne> ile vur': 'hit_smth_with_smth',
+
+        u'kuzeye git': 'go_north',
+        u'güneye git': 'go_south',
+        u'doğuya git': 'go east',
+        u'batıya git': 'go west',
+    }
+
+    def __init__(self, player):
+        self.player = player
+
+    def get_default_action_response(self, action_name):
+        return self.DEFAULT_ACTION_RESPONSES.get(
+            action_name, 'Bunu yapamıyorum.')
+
+    def action_method_name(self, action_name):
+        return 'response_when_%s' % action_name
+
+    def do_action_on(self, something, action_name, *args, **kwargs):
+        action_method_name = self.action_method_name(action_name)
+        if hasattr(self, action_method_name):
+            return getattr(something, action_method_name)(*args, **kwargs)
+        return self.get_default_action_response(action_name)
+
+    def read(self, something):
+        return self.do_action_on(something, 'read')
+
+    def taste(self, something):
+        return self.do_action_on(something, 'taste')
+
+    def take(self, something):
+        return self.do_action_on(something, 'take')
+
+    def eat(self, something):
+        return self.do_action_on(something, 'eat')
+
+
+class InventoryView(GameObjectView):
+    @staticmethod
+    def display(_object):
+        print 'Çantamda şunlar var:'
+        for child in _object.children:
+            print child.view.display(child)
+            print "----"
+
+
+class Bag(GameObject):
+    def __init__(self, *args, **kwargs):
+        super(Bag, self).__init__(*args, **kwargs)
+        self.view = InventoryView
+
+
+class Player(GameObject):
+    def __init__(self):
+        super(Player, self).__init__('Oyuncu')
+        self.controller = PlayerController(self)
+        self.inventory = Bag('Çantam', parent=self)
+
+    def interractable_objects(self):
+        return self.inventory.children + self.place.children
+
+
+class Game(GameObject):
+    def __init__(self, *args, **kwargs):
+        self.author = kwargs.pop('author')
+        self.player = Player()
+        self.status = PLAYING
+        self.player.set_parent(kwargs.pop('start_point'))
+        super(Game, self).__init__(*args, **kwargs)
+
+
+class Interpreter(object):
+
+    converters = {
+        'accusative': '<nesneyi>',
+        'genetive': '<nesnenin>',
+    }
+
+    def __init__(self, game=None):
+        self.game = game
+
+    def parse_input(self, text):
+        names = []
+        for name_case, converted_string in self.converters.items():
+            checker_method = 'is_' + name_case
+            for word in text.split():
+                hit, suffix = getattr(Word(word), checker_method)()
+                if hit:
+                    text = text.replace(word, converted_string)
+                    names.append((word, name_case))
+        return text, names
+
+    def find_controller_method(self, input_command):
+        command_controllers = [self.game.player.controller, ]
+        found_command = None
+        for command_controller in command_controllers:
+            for command, method in command_controller.commands.iteritems():
+                if command == input_command:
+                    return command_controller, method
+        return None, None
+
+    def find_objects(self, names):
+        objects = self.game.player.inventory.children +\
+            self.game.player.parent.children
+        found_objects = []
+        for name, name_case in names:
+            for obj in objects:
+                obj_case_name = getattr(Word(obj.name), name_case)()
+                if obj_case_name == name:
+                    found_objects.append(obj)
+        return found_objects
+
+    def get_input(self, text=u'Ne yapmak istiyorsun?'):
+        response = raw_input('\n' + text + '\n>').decode('utf-8').lower()
+        import ipdb; ipdb.set_trace()
+        command, names = self.parse_input(response)
+        controller, method = self.find_controller_method(command)
+        if not controller:
+            print u'Anlayamadım'
+            return
+        objects = self.find_objects(names)
+        if not objects:
+            print u'Etrafta %s göremedim.' % names[0][0]
+            return
+        print getattr(controller, method)(*objects)
+
+    def run(self):
+        self.game.player.parent.view.display(self.game.player.parent)
+        while self.game.status == PLAYING:
+            self.get_input()
+
+if __name__ == "__main__":
     import doctest
     doctest.testmod()
