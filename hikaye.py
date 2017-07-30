@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+from turkish import Word
+import time
+import sys
 
 NORTH = 'N'
 SOUTH = 'S'
@@ -16,123 +19,28 @@ def reverse_direction(direction):
     return {NORTH: SOUTH, SOUTH: NORTH, WEST: EAST, EAST: WEST}[direction]
 
 
-class cached_property(object):
-    def __init__(self, func):
-        self.__doc__ = getattr(func, '__doc__')
-        self.func = func
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return self
-        value = obj.__dict__[self.func.__name__] = self.func(obj)
-        return value
-
-
-class Word(object):
-    """
-    """
-
-    llv_accusative_case_suffixes = {
-        u'a': u'yı', u'e': u'yi', u'ı': u'yı', u'i': u'yi', u'o': u'yu',
-        u'ö': u'yü', u'u': u'yu', u'ü': u'yü'
-    }
-
-    llo_accusative_case_suffixes = {
-        u'a': u'i', u'e': u'i', u'ı': u'ı', u'i': u'i', u'o': u'u',
-        u'ö': u'ü', u'u': u'u', u'ü': u'ü'
-    }
-
-    llv_genetive_case_suffixes = {
-        u'a': u'nın', u'e': u'nin', u'ı': u'nın', u'i': u'nin', u'o': u'nun',
-        u'ö': u'nün', u'u': u'nun', u'ü': u'nün'
-    }
-
-    llo_genetive_case_suffixes = {
-        u'a': u'in', u'e': u'in', u'ı': u'ın', u'i': u'in', u'o': u'un',
-        u'ö': u'ün', u'u': u'un', u'ü': u'ün'
-    }
-
-    def __init__(self, word):
-        self.word = word
-
-    def get_last_vowel_info(self):
-        """
-        >>> assert Word('saat').get_last_vowel_info() == (False, 'a')
-        >>> assert Word('puma').get_last_vowel_info() == (True, 'a')
-        """
-        w = self.word
-        v = self.llv_accusative_case_suffixes
-        lv = None
-        for i in range(len(w) - 1, -1, -1):
-            if w[i] in v:
-                lv = w[i]
-                break
-        if not lv:
-            return False, False
-        if i == len(w) - 1:
-            return True, lv
-        return False, lv
-
-    def accusative(self):
-        """
-        >>> assert Word('saat').accusative() == 'saati'
-        """
-        is_vowel_last_letter, vowel = self.get_last_vowel_info()
-        if is_vowel_last_letter:
-            return self.word + self.llv_accusative_case_suffixes[vowel]
+def _print(text):
+    for letter in text:
+        sys.stdout.write(letter)
+        sys.stdout.flush()
+        if letter in '!.':
+            time.sleep(1)
         else:
-            return self.word + self.llo_accusative_case_suffixes[vowel]
-
-    def is_accusative(self):
-        """
-        >>> assert Word('saati').is_accusative() == (True, 'i')
-        """
-        is_vowel_last_letter, vowel = self.get_last_vowel_info()
-        if not is_vowel_last_letter:
-            suffixes = self.llv_accusative_case_suffixes.values()
-        else:
-            suffixes = self.llo_accusative_case_suffixes.values()
-        found = filter(self.word.endswith, suffixes)
-        if found:
-            return True, found[0]
-        return False, ''
-
-    def genetive(self):
-        """
-        >>> assert Word('saat').genetive() == 'saatin'
-        """
-        is_vowel_last_letter, vowel = self.get_last_vowel_info()
-        if is_vowel_last_letter:
-            return self.word + self.llv_genetive_case_suffixes[vowel]
-        else:
-            return self.word + self.llo_genetive_case_suffixes[vowel]
-
-    def is_genetive(self):
-        """
-        >>> assert Word('saatin').is_genetive() == (True, 'in')
-        """
-        is_vowel_last_letter, vowel = self.get_last_vowel_info()
-        if is_vowel_last_letter:
-            suffixes = self.llv_genetive_case_suffixes.values()
-        else:
-            suffixes = self.llo_genetive_case_suffixes.values()
-        found = filter(self.word.endswith, suffixes)
-        if found:
-            return True, found[0]
-        return False, ''
+            time.sleep(0.01)
+    print
 
 
 class GameObjectView(object):
     @staticmethod
     def display(_object):
-        print _object.name
+        _print(_object.name)
         if _object.description:
-            print '-' * len(_object.name)
-            print _object.description
+            _print('-' * len(_object.name))
+            _print(_object.description)
 
     @staticmethod
     def out(text):
-        print text
+        _print(text)
 
 
 class BaseGameObject(object):
@@ -225,13 +133,23 @@ class PlayerController(object):
         return self.do_action_on(something, 'eat')
 
 
+class GameController(object):
+    def __init__(self, game):
+        self.game = game
+
+    def start(self):
+        self.game.view.display(self.game)
+        self.game.player.parent.view.display(self.game.player.parent)
+        self.game.interpreter.run()
+
+
 class InventoryView(GameObjectView):
     @staticmethod
     def display(_object):
-        print 'Çantamda şunlar var:'
+        _print('Çantamda şunlar var:')
         for child in _object.children:
-            print child.view.display(child)
-            print "----"
+            _print(child.view.display(child))
+            _print("----")
 
 
 class Bag(GameObject):
@@ -251,11 +169,14 @@ class Player(GameObject):
 
 
 class Game(GameObject):
+
     def __init__(self, *args, **kwargs):
         self.author = kwargs.pop('author')
         self.player = Player()
         self.status = PLAYING
         self.player.set_parent(kwargs.pop('start_point'))
+        self.controller = GameController(self)
+        self.interpreter = Interpreter(self)
         super(Game, self).__init__(*args, **kwargs)
 
 
@@ -281,7 +202,7 @@ class Interpreter(object):
         return text, names
 
     def find_controller_method(self, input_command):
-        command_controllers = [self.game.player.controller, ]
+        command_controllers = [self.game.player.controller, self.game.controller]
         found_command = None
         for command_controller in command_controllers:
             for command, method in command_controller.commands.iteritems():
@@ -302,20 +223,18 @@ class Interpreter(object):
 
     def get_input(self, text=u'Ne yapmak istiyorsun?'):
         response = raw_input('\n' + text + '\n>').decode('utf-8').lower()
-        import ipdb; ipdb.set_trace()
         command, names = self.parse_input(response)
         controller, method = self.find_controller_method(command)
         if not controller:
-            print u'Anlayamadım'
+            _print(u'Anlayamadım')
             return
         objects = self.find_objects(names)
         if not objects:
-            print u'Etrafta %s göremedim.' % names[0][0]
+            _print(u'Etrafta %s göremedim.' % names[0][0])
             return
-        print getattr(controller, method)(*objects)
+        _print(getattr(controller, method)(*objects))
 
     def run(self):
-        self.game.player.parent.view.display(self.game.player.parent)
         while self.game.status == PLAYING:
             self.get_input()
 
